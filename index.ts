@@ -277,52 +277,8 @@ class MCPClient {
           this.mcpClients.set(serverId, mcpClient);
           this.mcpTransports.set(serverId, transport);
           
-          // Implement retry mechanism with exponential backoff for server initialization
-          const maxRetries = 5;
-          const initialDelayMs = 1000; // Start with 1 second delay
-          let retryCount = 0;
-          let toolsResult;
-          
-          // Since we've already added a delay for UVX servers above, we can simplify this loop
-          while (retryCount < maxRetries) {
-            try {
-              // Attempt to retrieve tools from the server
-              toolsResult = await mcpClient.listTools();
-              serverLogger.info(`Successfully retrieved tools from server '${serverId}' on attempt ${retryCount + 1}`);
-              break; // Success! Exit the retry loop
-            } catch (error: unknown) {
-              retryCount++;
-              
-              // Safely handle error object by checking its type
-              const errorObj = error as Error;
-              const errorMessage = errorObj && errorObj.message ? errorObj.message : String(error);
-              
-              if (retryCount >= maxRetries) {
-                // If we've reached max retries, rethrow the error
-                serverLogger.error(`Failed to retrieve tools from server '${serverId}' after ${maxRetries} attempts:`, errorObj);
-                throw error;
-              } else {
-                // Calculate delay with exponential backoff
-                const delayMs = initialDelayMs * Math.pow(2, retryCount);
-                
-                if (errorMessage.includes('Received request before initialization was complete')) {
-                  // This is the specific error we're trying to handle with retries
-                  serverLogger.warn(`Server '${serverId}' not initialized yet. Retrying in ${delayMs}ms... (Attempt ${retryCount}/${maxRetries})`);
-                } else {
-                  // For other errors, also retry but log differently
-                  serverLogger.warn(`Error retrieving tools from server '${serverId}': ${errorMessage}. Retrying in ${delayMs}ms... (Attempt ${retryCount}/${maxRetries})`);
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-              }
-            }
-          }
-          
-          // If we've exited the retry loop without a toolsResult, something went wrong
-          if (!toolsResult) {
-            throw new Error(`Failed to retrieve tools from server '${serverId}' after ${maxRetries} attempts`);
-          }
-          
+          // Retrieve and store available tools from this server
+          const toolsResult = await mcpClient.listTools();
           const serverTools = toolsResult.tools.map((tool) => {
             // Create a unique tool name by prefixing with server ID
             const uniqueToolName = `${serverId}_${tool.name}`;
