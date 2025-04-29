@@ -12,7 +12,12 @@
       "args": [
         "/mnt/c/Users/kamus/CascadeProjects/mcp-postgres-full-access/dist/index.js",
         "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
-      ]
+      ],
+      "env": {
+        "TRANSACTION_TIMEOUT_MS": "60000",
+        "MAX_CONCURRENT_TRANSACTIONS": "5",
+        "PG_STATEMENT_TIMEOUT_MS": "30000"
+      }
     },
     "everything": {
       "command": "npx",

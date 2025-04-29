@@ -205,12 +205,46 @@ class MCPClient {
           serverLogger.debug(`Server type detection for ${serverId}:`, { isJs, isPy, isDocker, isNpx, isUvx });
           
           // Following the sample code approach for handling different command types
+          // Handle platform-specific command adjustments
+          if (process.platform === 'win32') {
+            if (isNpx) {
+              // On Windows, npx needs to be called as npx.cmd
+              command = 'npx.cmd';
+              serverLogger.debug(`Adjusted command for Windows: ${command}`);
+            } else if (isPy && command === 'python3') {
+              // On Windows, python3 command is typically just 'python'
+              command = 'python';
+              serverLogger.debug(`Adjusted Python command for Windows: ${command}`);
+            }
+          } else if (isPy && command === 'python') {
+            // On Unix-like systems, prefer python3 for explicit versioning
+            command = 'python3';
+            serverLogger.debug(`Adjusted Python command for Unix-like systems: ${command}`);
+          }
           // No need to detect npx path as our config already has the command defined
+          
+          // Create environment with process.env and server config env
+          // Ensure all environment variables are strings to satisfy type requirements
+          const combinedEnv: Record<string, string> = {};
+          
+          // Add process.env values, ensuring they are strings
+          for (const key in process.env) {
+            if (process.env[key] !== undefined) {
+              combinedEnv[key] = process.env[key] as string;
+            }
+          }
+          
+          // Add server config env values
+          if (serverConfig.env) {
+            for (const key in serverConfig.env) {
+              combinedEnv[key] = serverConfig.env[key];
+            }
+          }
           
           const transport = new StdioClientTransport({
             command,
             args,
-            env: serverConfig.env || {},
+            env: combinedEnv,
           });
 
           // Debug the transport that will be used
