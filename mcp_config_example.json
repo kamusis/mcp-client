@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "postgres-full-localhost-dev": {
+      "command": "node",
+      "args": [
+        "/mnt/c/Users/kamus/CascadeProjects/mcp-postgres-full-access/dist/index.js",
+        "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+      ]
+    },
+    "everything": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ]
+    }
+  }
+}
