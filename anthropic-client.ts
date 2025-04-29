@@ -2,6 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk";
 import { MessageParam } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
 import { createLogger } from "./logger.js";
 import { MCPServerManager } from "./mcp-server.js";
+import { ChatMessage } from "./types.js";
 
 // Create logger instance for API calls
 const apiLogger = createLogger('ANTHROPIC-CLIENT');
@@ -20,15 +21,27 @@ export class AnthropicClient {
   /**
    * Handles the Anthropic tool calling and chat loop logic.
    * Sends tool results as user messages for Claude models.
+   * @param query - The user's current query
+   * @param chatHistory - Optional array of previous chat messages
+   * @returns A string response from the model
    */
-  public async processQuery(query: string): Promise<string> {
-    // Create initial message with user query
-    const messages: Array<MessageParam> = [
-      {
-        role: "user",
-        content: query,
-      },
-    ];
+  public async processQuery(query: string, chatHistory: ChatMessage[] = []): Promise<string> {
+    // Convert chat history to Anthropic message format
+    const messages: Array<MessageParam> = [];
+    
+    // Add chat history
+    for (const message of chatHistory) {
+      messages.push({
+        role: message.role as "user" | "assistant", // Anthropic doesn't support system role in the same way
+        content: message.content
+      });
+    }
+    
+    // Add current query
+    messages.push({
+      role: "user",
+      content: query,
+    });
     
     // Get the tools from the MCP server manager
     const tools = this.mcpServerManager.getTools();

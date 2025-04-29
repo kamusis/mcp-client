@@ -1,6 +1,7 @@
 import { OpenAI } from "openai";
 import { createLogger } from "./logger.js";
 import { MCPServerManager } from "./mcp-server.js";
+import { ChatMessage } from "./types.js";
 
 // Create logger instance for API calls
 const apiLogger = createLogger('OPENAI-CLIENT');
@@ -19,14 +20,27 @@ export class OpenAIClient {
   /**
    * Handles the OpenAI tool calling and chat loop logic.
    * Extracts plain text from tool results for best model performance.
+   * @param query - The user's current query
+   * @param chatHistory - Optional array of previous chat messages
+   * @returns A string response from the model
    */
-  public async processQuery(query: string): Promise<string> {
-    let openaiMessages: OpenAI.ChatCompletionMessageParam[] = [
-      {
-        role: "user",
-        content: query,
-      },
-    ];
+  public async processQuery(query: string, chatHistory: ChatMessage[] = []): Promise<string> {
+    // Convert chat history to OpenAI message format
+    let openaiMessages: OpenAI.ChatCompletionMessageParam[] = [];
+
+    // Add chat history
+    for (const message of chatHistory) {
+      openaiMessages.push({
+        role: message.role as "user" | "assistant" | "system",
+        content: message.content
+      });
+    }
+
+    // Add current query
+    openaiMessages.push({
+      role: "user",
+      content: query,
+    });
     
     const tools = this.mcpServerManager.getTools().map((tool) => ({
       type: "function" as const,
